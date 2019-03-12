@@ -10,10 +10,11 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:bdfbe1d4debf00da10a98dd159b106160cc7616b5b5cee6123bfc6006cf4f08c"
+  digest = "1:b3cf7d0781dd625730e666e4ad836d01d00e407c280b0a482b04cccf18b6f36c"
   name = "github.com/Azure/azure-sdk-for-go"
   packages = [
     "services/compute/mgmt/2017-03-30/compute",
+    "services/compute/mgmt/2018-10-01/compute",
     "version",
   ]
   pruneopts = "UT"
@@ -72,6 +73,19 @@
   pruneopts = "UT"
   revision = "c823c79ea1570fb5ff454033735a8e68575d1d0f"
   version = "v1.3.0"
+
+[[projects]]
+  digest = "1:2e3c336fc7fde5c984d2841455a658a6d626450b1754a854b3b32e7a8f49a07a"
+  name = "github.com/google/go-cmp"
+  packages = [
+    "cmp",
+    "cmp/internal/diff",
+    "cmp/internal/function",
+    "cmp/internal/value",
+  ]
+  pruneopts = "UT"
+  revision = "3af367b6b30c263d47e8895973edcca9a49cf029"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:2ae8314c44cd413cfdb5b1df082b350116dd8d2fff973e62c01b285b7affd89e"
@@ -211,6 +225,12 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = ["github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2017-03-30/compute"]
+  input-imports = [
+    "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2017-03-30/compute",
+    "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2018-10-01/compute",
+    "github.com/Azure/go-autorest/autorest",
+    "github.com/Azure/go-autorest/autorest/adal",
+    "github.com/google/go-cmp/cmp",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -3,28 +3,33 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"reflect"
 )
 
-// DeepAssignment dst and src should be the same type in different API version
+// DeepCopy dst and src should be the same type in different API version
 // dst should be pointer type
-func DeepAssignment(dst, src interface{}) {
-	defer func() {
+func DeepCopy(dst, src interface{}) error {
+	defer func() error {
 		if r := recover(); r != nil {
-			log.Fatal("Fail to covert object", r)
+			return fmt.Errorf("fail to copy object %v", r)
 		}
+		return nil
 	}()
 	dstValue := reflect.ValueOf(dst)
 	srcValue := reflect.ValueOf(src)
 	if dstValue.Kind() != reflect.Ptr {
-		log.Fatal("The dst must be Ptr")
+		return fmt.Errorf("The dst must be Ptr")
 	}
 	dstValue = dstValue.Elem()
-	deepAssignmentInternal(dstValue, srcValue, 0, "")
+	if dstValue.Type().String() != srcValue.Type().String() {
+		return fmt.Errorf("the dst type (%q) and src type (%q) are not the same", dstValue.Type().String(), srcValue.Type().String())
+	}
+	deepCopyInternal(dstValue, srcValue, 0, "")
+	return nil
 }
 
-func deepAssignmentInternal(dstValue, srcValue reflect.Value, depth int, path string) {
+func deepCopyInternal(dstValue, srcValue reflect.Value, depth int, path string) {
 	if dstValue.CanSet() {
 		switch srcValue.Kind() {
 		case reflect.Bool:
@@ -43,7 +48,7 @@ func deepAssignmentInternal(dstValue, srcValue reflect.Value, depth int, path st
 			if !srcValue.IsNil() {
 				d := reflect.New(dstValue.Type().Elem())
 				dstValue.Set(d)
-				deepAssignmentInternal(dstValue.Elem(), srcValue.Elem(), depth+1, "")
+				deepCopyInternal(dstValue.Elem(), srcValue.Elem(), depth+1, "")
 			}
 		case reflect.Slice:
 			if !srcValue.IsNil() {
@@ -51,27 +56,25 @@ func deepAssignmentInternal(dstValue, srcValue reflect.Value, depth int, path st
 				dstValue.Set(d)
 				for i := 0; i < srcValue.Len(); i++ {
 					v := dstValue.Index(i)
-					deepAssignmentInternal(v, srcValue.Index(i), depth+1, "")
+					deepCopyInternal(v, srcValue.Index(i), depth+1, "")
 					v.Set(v)
 				}
 			}
 		case reflect.Array:
-			if !srcValue.IsNil() {
-				d := reflect.New(dstValue.Type()).Elem()
-				dstValue.Set(d)
-				for i := 0; i < srcValue.Len(); i++ {
-					v := reflect.New(srcValue.Index(i).Type()).Elem()
-					deepAssignmentInternal(v, srcValue.Index(i), depth+1, "")
-					d.Index(i).Set(v)
-				}
+			d := reflect.New(dstValue.Type()).Elem()
+			for i := 0; i < srcValue.Len(); i++ {
+				v := reflect.New(srcValue.Index(i).Type()).Elem()
+				deepCopyInternal(v, srcValue.Index(i), depth+1, "")
+				d.Index(i).Set(v)
 			}
+			dstValue.Set(d)
 
 		case reflect.Map:
 			if !srcValue.IsNil() {
 				d := reflect.MakeMap(dstValue.Type())
 				for _, key := range srcValue.MapKeys() {
 					v := reflect.New(srcValue.MapIndex(key).Type()).Elem()
-					deepAssignmentInternal(v, srcValue.MapIndex(key), depth+1, "")
+					deepCopyInternal(v, srcValue.MapIndex(key), depth+1, "")
 					d.SetMapIndex(key, v)
 				}
 				dstValue.Set(d)
@@ -81,7 +84,7 @@ func deepAssignmentInternal(dstValue, srcValue reflect.Value, depth int, path st
 				srcField := srcValue.Field(i)
 				dstField := dstValue.FieldByName(srcValue.Type().Field(i).Name)
 				if dstField.IsValid() && dstField.CanAddr() && dstField.CanSet() {
-					deepAssignmentInternal(dstField, srcField, depth+1, "")
+					deepCopyInternal(dstField, srcField, depth+1, "")
 				}
 			}
 		default:
